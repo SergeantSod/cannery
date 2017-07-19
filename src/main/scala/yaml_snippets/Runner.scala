@@ -40,8 +40,7 @@ object Runner {
   def generateFromSnippets(snippetsFilePath: String, outputFilePath: String): Unit = {
     readingFrom(snippetsFilePath){ inputStream =>
       writingTo(outputFilePath){ output =>
-        val yaml = new Yaml
-        recoverTopics(yaml.load(inputStream)) match {
+        yaml.load[Seq[Snippet]](inputStream) match {
           case Left(error) => println(s"Malformed snippets: $error.")
           case Right(topics) => generateFromTopics(topics, output)
         }
@@ -78,46 +77,5 @@ object Runner {
 
   }
 
-
-
-  //TODO Move all this stuff to a YAML wrapper or replace with Jackson+YAML or use this as an opportunity to play around with shapeless's type-class typeclass and derive a mapper from SnakeYaml that way.
-  def recoverTopics(potentialList: Any) : ErrorOr[Seq[Snippet]] = {
-    potentialList match {
-      case aList:JavaList[_] =>
-        val emptyResult: ErrorOr[Vector[Snippet]] = Right(Vector.empty[Snippet])
-        aList.asScala.foldLeft(emptyResult){ (resultOption, someObject) =>
-          for {
-            someResult <- resultOption
-            newTopic <- recoverTopic(someObject)
-          } yield someResult :+ newTopic
-        }
-      case _ =>  Left(s"Expected a List of Topics, but got a ${potentialList.getClass}.")
-    }
-  }
-
-  //TODO Move to YAML wrapper or replace with Jackson+YAML
-  def recoverTopic(potentialHashMap: Any) : ErrorOr[Snippet] = {
-    potentialHashMap match {
-      case aHashMap: JavaMap[Any, Any] => {
-        val scalaMap = aHashMap.asScala
-        for {
-          snippetsObject <- scalaMap get "snippet" toRight "missing snippets key"
-          snippetText <- allCatch.either{ snippetsObject.asInstanceOf[String] }.left.map(_ => "Expected a string.")
-          keywordsObject <- scalaMap get "keywords" toRight "missing keywords key"
-          keywordsSeq <- recoverStringSeq(keywordsObject)
-        } yield Snippet(keywordsSeq, snippetText)
-      }
-      case _ => Left(s"Expected a Map, but got a ${potentialHashMap.getClass}.")
-    }
-  }
-
-  //TODO Move to YAML wrapper or replace with Jackson+YAML
-  def recoverStringSeq(potentialList:Any):ErrorOr[Seq[String]] = {
-    potentialList match {
-      case aList: JavaList[Any] if aList.asScala.forall(_.isInstanceOf[String]) =>
-        Right(aList.asScala.asInstanceOf[Seq[String]])
-      case _ => Left(s"Expected a List of Strings, but got a ${potentialList.getClass}.")
-    }
-  }
   
 }
