@@ -51,7 +51,7 @@ package object repl {
       key -> StdIn.readLine()
     }.toMap
   }
-
+  //TODO The terminal-related stuff could be extracted.
   def printHeader(header: String):Unit = {
     println(Console.UNDERLINED + header)
   }

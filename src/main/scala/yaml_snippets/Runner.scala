@@ -68,6 +68,7 @@ object Runner {
     val topics = index.keys.toSeq.sorted
     choose(topics, "Topics")(){ topic =>
       choose(index(topic), "Snippets")(_.source){ chosenSnippet =>
+        //TODO It would be awesome if there were some way to define global variables, or better yet, re-use earlier bindings where possible and only ask for information on demand.
         val bindings = gather("Details are needed", chosenSnippet.variableNames)
         output.println(chosenSnippet.eval(bindings))
         Stop
@@ -79,7 +80,7 @@ object Runner {
 
 
 
-  //TODO Move to YAML wrapper
+  //TODO Move all this stuff to a YAML wrapper or replace with Jackson+YAML or use this as an opportunity to play around with shapeless's type-class typeclass and derive a mapper from SnakeYaml that way.
   def recoverTopics(potentialList: Any) : ErrorOr[Seq[Snippet]] = {
     potentialList match {
       case aList:JavaList[_] =>
@@ -94,7 +95,7 @@ object Runner {
     }
   }
 
-  //TODO Move to YAML wrapper
+  //TODO Move to YAML wrapper or replace with Jackson+YAML
   def recoverTopic(potentialHashMap: Any) : ErrorOr[Snippet] = {
     potentialHashMap match {
       case aHashMap: JavaMap[Any, Any] => {
@@ -110,7 +111,7 @@ object Runner {
     }
   }
 
-  //TODO Move to YAML wrapper
+  //TODO Move to YAML wrapper or replace with Jackson+YAML
   def recoverStringSeq(potentialList:Any):ErrorOr[Seq[String]] = {
     potentialList match {
       case aList: JavaList[Any] if aList.asScala.forall(_.isInstanceOf[String]) =>
