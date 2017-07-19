@@ -14,10 +14,10 @@ package object repl {
 
     clear()
     printHeader(header)
-    println("0: Done.")
+    printOption("0", "Done.")
 
     options.zipWithIndex.foreach{ case (option, index) =>
-      println(s"${index + 1}: ${format(option)}")
+      printOption(index + 1, format(option))
     }
 
     readInt() match {
@@ -53,7 +53,11 @@ package object repl {
   }
   //TODO The terminal-related stuff could be extracted.
   def printHeader(header: String):Unit = {
-    println(Console.UNDERLINED + header)
+    println(Console.UNDERLINED + header + Console.RESET)
+  }
+
+  def printOption(label:Any, text: Any):Unit = {
+    println(Console.BOLD +  s"$label: " + Console.RESET + text)
   }
 
   def clear():Unit = {
