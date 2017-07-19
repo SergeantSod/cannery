@@ -1,15 +1,15 @@
+package yaml_snippets
+
 import java.io._
-import java.util
-import java.util.{List => JavaList}
-import java.util.{Map => JavaMap}
-import javax.script.Bindings
+import java.util.{List => JavaList, Map => JavaMap}
 
 import org.yaml.snakeyaml.Yaml
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import scala.io.StdIn
 import scala.util.control.Exception.allCatch
+
+import string_templates._
+import repl._
 
 object Runner {
 
@@ -20,33 +20,25 @@ object Runner {
     }
   }
 
-  //TODO Dry up the loan pattern.
-  def readinFrom[T](filePath: String)(block: InputStream => T ):Unit = {
-    var inputStream:Option[InputStream] = None
+  //TODO Reorder methods
+  def loaned[T <: { def close(): Unit }](closable: => T)(block: T => Unit): Unit = {
+    var inputStream:Option[T] = None
     try{
-      inputStream = Some(new BufferedInputStream(new FileInputStream(filePath)))
+      inputStream = Some(closable)
       inputStream.foreach(block)
     } finally {
       inputStream.foreach(_.close())
     }
-
   }
 
-  //TODO Dry up the loan pattern.
-  def writingTo[T](filePath: String)(block: PrintStream => T ):Unit = {
-    var outputStream:Option[PrintStream] = None
-    try{
-      outputStream = Some(new PrintStream(filePath))
-      outputStream.foreach(block)
-    } finally {
-      outputStream.foreach(_.close())
-    }
 
-  }
+  def readingFrom[T](filePath: String): ((FileInputStream) => Unit) => Unit = loaned(new FileInputStream(filePath))
+  def writingTo[T](filePath: String): ((PrintStream) => Unit) => Unit = loaned(new PrintStream(filePath))
+
 
   //TODO Naming
   def generateFromSnippets(snippetsFilePath: String, outputFilePath: String): Unit = {
-    readinFrom(snippetsFilePath){ inputStream =>
+    readingFrom(snippetsFilePath){ inputStream =>
       writingTo(outputFilePath){ output =>
         val yaml = new Yaml
         recoverTopics(yaml.load(inputStream)) match {
@@ -57,12 +49,12 @@ object Runner {
     }
   }
 
-  def buildIndex(snippets: Seq[Snippet]): Map[String, Seq[String]] = {
-    val emptyResult = Map.empty[String, Seq[String]] withDefaultValue Seq.empty[String]
-    snippets.foldLeft(Map.empty[String, Seq[String]]){ (index, topic) =>
+  def buildIndex(snippets: Seq[Snippet]): Map[String, Seq[StringTemplate]] = {
+    //TODO Apparently, Cats has a Semigroup for Maps that does this more elegantly.
+    snippets.foldLeft(Map.empty[String, Seq[StringTemplate]]){ (index, topic) =>
       topic.keywords.foldLeft(index){ (index, keyword) =>
-        val current = index getOrElse(keyword, List.empty[String])
-        index + (keyword -> (topic.text+:current))
+        val current = index getOrElse(keyword, List.empty[StringTemplate])
+        index + (keyword -> (topic.template+:current))
       }
     }
 
@@ -70,14 +62,14 @@ object Runner {
 
   //TODO Naming
   private def generateFromTopics(snippets: Seq[Snippet], output: PrintStream) = {
-    import REPL._
     //TODO Formatting
 
-    val index : Map[String, Seq[String]] = buildIndex(snippets)
+    val index : Map[String, Seq[StringTemplate]] = buildIndex(snippets)
     val topics = index.keys.toSeq.sorted
     choose(topics, "Topics")(){ topic =>
-      choose(index(topic), "Snippets")() { chosenSnippet =>
-        output.println(chosenSnippet)
+      choose(index(topic), "Snippets")(_.source){ chosenSnippet =>
+        val bindings = gather("Details are needed", chosenSnippet.variableNames)
+        output.println(chosenSnippet.eval(bindings))
         Stop
       }
       Continue
@@ -85,44 +77,13 @@ object Runner {
 
   }
 
-  object REPL extends Enumeration{
-    type Command = Value
-    val Continue, Stop = Value
-
-    @tailrec
-    def choose[T](options: Seq[T], header:String)(format: T => String ={ t: T => t.toString})(onChoice: T => Command): Unit ={
-      println(header)
-      println("0: Done.")
-
-      options.zipWithIndex.foreach{ case (option, index) =>
-        println(s"${index + 1}: ${format(option)}")
-      }
-
-      val choice = StdIn.readInt()
-
-      if(choice == 0){}
-      else if (choice >= 1 && choice <= options.size){
-        val chosen = options(choice - 1 )
-        onChoice(chosen) match {
-          case Continue =>  choose(options, header)(format)(onChoice)
-          case Stop => ()
-        }
-      } else {
-        println("Not a valid choice.")
-        choose(options, header)(format)(onChoice)
-      }
-    }
-  }
 
 
-  //TODO Move
-  type Result[T] = Either[String, T]
-
-  //TODO Move
-  def recoverTopics(potentialList: Any) : Result[Seq[Snippet]] = {
+  //TODO Move to YAML wrapper
+  def recoverTopics(potentialList: Any) : ErrorOr[Seq[Snippet]] = {
     potentialList match {
       case aList:JavaList[_] =>
-        val emptyResult: Result[Vector[Snippet]] = Right(Vector.empty[Snippet])
+        val emptyResult: ErrorOr[Vector[Snippet]] = Right(Vector.empty[Snippet])
         aList.asScala.foldLeft(emptyResult){ (resultOption, someObject) =>
           for {
             someResult <- resultOption
@@ -133,8 +94,8 @@ object Runner {
     }
   }
 
-  //TODO Move
-  def recoverTopic(potentialHashMap: Any) : Result[Snippet] = {
+  //TODO Move to YAML wrapper
+  def recoverTopic(potentialHashMap: Any) : ErrorOr[Snippet] = {
     potentialHashMap match {
       case aHashMap: JavaMap[Any, Any] => {
         val scalaMap = aHashMap.asScala
@@ -149,17 +110,13 @@ object Runner {
     }
   }
 
-  //TODO Move
-  def recoverStringSeq(potentialList:Any):Result[Seq[String]] = {
+  //TODO Move to YAML wrapper
+  def recoverStringSeq(potentialList:Any):ErrorOr[Seq[String]] = {
     potentialList match {
       case aList: JavaList[Any] if aList.asScala.forall(_.isInstanceOf[String]) =>
         Right(aList.asScala.asInstanceOf[Seq[String]])
       case _ => Left(s"Expected a List of Strings, but got a ${potentialList.getClass}.")
     }
   }
-
-  object string_templates{
-
-
-  }
+  
 }

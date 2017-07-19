@@ -1,3 +1,4 @@
+package yaml_snippets
 import scala.annotation.tailrec
 
 package object string_templates {
@@ -26,7 +27,7 @@ package object string_templates {
 
     def parse(template: String): Seq[TemplatePart] = parseInto(template: String, Vector.empty[TemplatePart])
 
-    val variablePattern = "<(\\w+)>".r
+    val variablePattern = "<([^<>]+)>".r
 
     @tailrec
     private def parseInto(template: CharSequence, result: Seq[TemplatePart]): Seq[TemplatePart] = variablePattern findFirstMatchIn template match {
@@ -42,7 +43,7 @@ package object string_templates {
   }
 
 
-  case class StringTemplate(parts: Seq[TemplatePart]){
+  case class StringTemplate(source: String, parts: Seq[TemplatePart]){
 
     lazy val variableNames:Seq[String] = parts.collect{case Variable(name) => name}
 
@@ -52,6 +53,6 @@ package object string_templates {
   }
 
   object StringTemplate{
-    def parse(template: String): StringTemplate = this(TemplatePart.parse(template))
+    def parse(template: String): StringTemplate = this(template, TemplatePart.parse(template))
   }
 }
