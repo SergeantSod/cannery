@@ -25,3 +25,8 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
 - [ ] Add tests for the interesting bits.
     - [ ] YAML-related type class derivation
 - [ ] Consider extracting YAML-related stuff into separate project
+- [ ] Cleanup
+    - [ ] Use shapeless for deep type checks and extract a better helper for YamlReads
+    - [ ] See how useful cats could be
+        - [ ] Some of the folds during parsing
+        - [ ] ValidatedNel would capture all the errors instead of failing at the first
