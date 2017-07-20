@@ -24,4 +24,4 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
 - [x] Push to Github
 - [ ] Add tests for the interesting bits.
     - [ ] YAML-related type class derivation
-    - [ ] Consider extracting it into separate project
+- [ ] Consider extracting YAML-related stuff into separate project
