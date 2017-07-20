@@ -13,15 +13,15 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
 ---
 ### TODOs
 
--[X] Rename to cannery
--[ ] Add example .yml
--[ ] Add option parser and enable other outputs, such as stdout, clipboard
--[ ] Support Co-Product in YamlReads type class
+- [x] Rename to cannery
+- [ ] Add example .yml
+- [ ] Add option parser and enable other outputs, such as stdout, clipboard
+- [ ] Support Co-Product in YamlReads type class
     * in case of Left, fall back to the Reads for the right side of the co-product, use flatmap
     * for CNil we have failed, since none of the cases matched
--[ ] Rename Yaml-related type classes
--[X] Write Readme with disclaimer
--[X] Push to Github
--[ ] Add tests for the interesting bits.
+- [ ] Rename Yaml-related type classes
+- [x] Write Readme with disclaimer
+- [x] Push to Github
+- [ ] Add tests for the interesting bits.
     - [ ] YAML-related type class derivation
     - [ ] Consider extracting it into separate project
