@@ -22,20 +22,21 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
 - [ ] We can parse StringTemplates directly, since we have `.map` now.
 - [ ] Rename Yaml-related type classes
 - [ ] Add tests for the interesting bits.
-    - [X] YAML-related type class derivation
     - [ ] Fix encoding issues for string case
+    - [X] YAML-related type class derivation
 - [ ] Consider extracting YAML-related stuff into separate project
-- [X] Use shapeless for deep type checks and extract a better helper for YamlReads
 - [ ] See how useful cats could be
     - [ ] Some of the folds during parsing
     - [ ] ValidatedNel would capture all the errors instead of failing at the first
+- [X] Use shapeless for deep type checks and extract a better helper for YamlReads
 
 #### Features
+- [ ] Multiple mentions of the same variable in different snippets should only ask me for the value once.
+- [ ] Allow both arbitrary number of snippets and keywords.
 - [ ] Add option parser and enable other outputs, such as stdout, clipboard
 - [ ] Support Co-Product in YamlReads type class
     * try implementation for Left, fall back to the Reads for the right side of the co-product maybe use recoverWith
     * for CNil we have failed, since none of the cases matched
-- [ ] Allow both arbitrary number of snippets and keywords.
 
 #### Other
 
