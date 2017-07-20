@@ -3,7 +3,7 @@ package cannery.yaml
 import java.util.{List => JavaList, Map => JavaMap}
 
 import org.yaml.snakeyaml.Yaml
-import shapeless.{HList, HNil, LabelledProductTypeClass, LabelledProductTypeClassCompanion}
+import shapeless.{HList, HNil, LabelledProductTypeClass, LabelledProductTypeClassCompanion, TypeCase, Typeable}
 import cannery.ErrorOr
 import cannery.yaml.YamlReads.YamlMap
 
@@ -16,8 +16,23 @@ import scala.reflect.ClassTag
   *
   * @tparam T The desired type.
   */
-trait YamlReads[T] {
+trait YamlReads[T] { leftReads =>
   def reads(rawValue: Any): ErrorOr[T]
+
+  def recoveringWith(fallback: YamlReads[T]): YamlReads[T] = new YamlReads[T] {
+    override def reads(rawValue: Any): ErrorOr[T] = {
+      // Note that we flatMap over the left projection, which effectively allows us to provide an alternative Either
+      // that is only evaluated for the failure case. This also means we throw way the error message (which isn't ideal).
+      leftReads.reads(rawValue).left.flatMap(_ => fallback.reads(rawValue) )
+    }
+  }
+
+  //TODO smells like a Functor. If we have Cats, investigate what other type classes we get
+  def map[O](transform: T => O): YamlReads[O] = new YamlReads[O] {
+    override def reads(rawValue: Any): ErrorOr[O] = {
+      leftReads.reads(rawValue).map(transform)
+    }
+  }
 }
 
 trait Helpers{
@@ -35,30 +50,41 @@ trait Helpers{
 
 }
 
+//TODO Check if we still need deepCheck.
+case class ReadsExpectedType[T:Typeable](nameInError: String, deepCheck:(T=>Boolean) = {_:T => true} ) extends YamlReads[T]{
+  override def reads(any: Any): ErrorOr[T] = {
+    val IsOfTargetType = TypeCase[T]
+    any match {
+      case IsOfTargetType(asT) if deepCheck(asT) => Right(asT)
+      case _ => Left(s"Expected $nameInError, got ${any.getClass.getName}.")
+    }
+  }
+}
 
 object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
 
   type YamlMap = JavaMap[String, Any]
 
-  implicit val mapReads:YamlReads[YamlMap] = new YamlReads[YamlMap] with Helpers {
-    override def reads(any: Any): ErrorOr[YamlMap] = expectYamlMap(any)
+  implicit lazy val javaMapTypeAble : Typeable[YamlMap] = new Typeable[YamlMap] {
+    override def cast(t: Any): Option[YamlMap] = {
+      t match {
+        case v: JavaMap[_,_] if v.asScala.keys.forall(_.isInstanceOf[String]) => Some(v.asInstanceOf[YamlMap])
+        case _ => None
+      }
+    }
+
+    override def describe: String = "java.util.Map[String,Any]"
   }
 
-  implicit val booleanReads: YamlReads[Boolean] = new YamlReads[Boolean] with Helpers {
-    override def reads(rawValue: Any): ErrorOr[Boolean] = expect[Boolean]("boolean", rawValue)
-  }
+  implicit lazy val mapReads:YamlReads[YamlMap] = ReadsExpectedType[YamlMap]("object")
 
-  implicit val intReads: YamlReads[Int] = new YamlReads[Int] with Helpers {
-    override def reads(rawValue: Any): ErrorOr[Int] = expect[Int]("int", rawValue)
-  }
+  implicit lazy val booleanReads: YamlReads[Boolean] = ReadsExpectedType[Boolean]("boolean")
 
-  implicit val floatReads: YamlReads[Float] = new YamlReads[Float] with Helpers {
-    override def reads(rawValue: Any): ErrorOr[Float] = expect[Float]("float", rawValue)
-  }
+  implicit lazy val intReads: YamlReads[Int] = ReadsExpectedType[Int]("integer")
 
-  implicit val doubleReads: YamlReads[Double] = new YamlReads[Double] with Helpers {
-    override def reads(rawValue: Any): ErrorOr[Double] = expect[Double]("double", rawValue)
-  }
+  implicit lazy val floatReads: YamlReads[Float] = ReadsExpectedType[Float]("float") recoveringWith(doubleReads map {_.toFloat})
+
+  implicit lazy val doubleReads: YamlReads[Double] = ReadsExpectedType[Double]("double")
 
 
   implicit val stringReads: YamlReads[String] = new YamlReads[String] with Helpers {
