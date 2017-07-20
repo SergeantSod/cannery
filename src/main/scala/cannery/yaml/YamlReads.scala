@@ -35,23 +35,24 @@ trait YamlReads[T] { leftReads =>
   }
 }
 
-//TODO Check if we still need deepCheck.
-case class ReadsExpectedType[T:Typeable](nameInError: String, deepCheck:(T=>Boolean) = {_:T => true} ) extends YamlReads[T]{
+
+//TODO Dry it up
+case class TypeCastReads[T](nameInError:String, cast: Any => Option[T]) extends YamlReads[T]{
+
   override def reads(any: Any): ErrorOr[T] = {
-    val IsOfTargetType = TypeCase[T]
-    any match {
-      case IsOfTargetType(asT) if deepCheck(asT) => Right(asT)
-      case _ => Left(s"Expected $nameInError, got ${any.getClass.getName}.")
-    }
+    cast(any).toRight(s"Expected ${nameInError}, got ${any.getClass.getName}.")
   }
 }
 
-//For instances where there is no Typeable
-//TODO Dry it up
-case class TypeCastReads[T](nameInError: String)(typeCheck:(Any=>Boolean)) extends YamlReads[T]{
-  override def reads(any: Any): ErrorOr[T] = {
-    if(typeCheck(any)) { Right(any.asInstanceOf[T]) }
-    else Left(s"Expected $nameInError, got ${any.getClass.getName}.")
+object TypeCastReads{
+
+  //For instances where there is no Typeable
+  def apply[T](nameInError:String)(cast: PartialFunction[Any,T]):TypeCastReads[T] = {
+    this(nameInError, cast.lift)
+  }
+
+  def apply[T](implicit typeable:Typeable[T]):TypeCastReads[T]={
+    this(typeable.describe, typeable.cast)
   }
 }
 
@@ -83,28 +84,33 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
     override def describe: String = "java.util.List[Any]"
   }
 
-  implicit lazy val mapReads:YamlReads[YamlMap] = ReadsExpectedType[YamlMap]("object")
+  implicit lazy val mapReads:YamlReads[YamlMap] = TypeCastReads[YamlMap]
 
   //TODO support targeting a Scala map with String keys.
 
-  implicit lazy val javaListReads:YamlReads[JavaList[Any]] = ReadsExpectedType[JavaList[Any]]("list")
+  implicit lazy val javaListReads:YamlReads[JavaList[Any]] = TypeCastReads[JavaList[Any]]
 
   implicit lazy val anySeqReads:YamlReads[Seq[Any]] = javaListReads.map(_.asScala)
 
-  implicit lazy val booleanReads: YamlReads[Boolean] = ReadsExpectedType[Boolean]("boolean")
+  implicit lazy val booleanReads: YamlReads[Boolean] = TypeCastReads[Boolean]
 
-  implicit lazy val intReads: YamlReads[Int] = ReadsExpectedType[Int]("integer")
+  implicit lazy val intReads: YamlReads[Int] = TypeCastReads[Int]
 
-  implicit lazy val floatReads: YamlReads[Float] = ReadsExpectedType[Float]("float") recoveringWith(doubleReads map {_.toFloat})
+  implicit lazy val floatReads: YamlReads[Float] = TypeCastReads[Float] recoveringWith(doubleReads map {_.toFloat})
 
-  implicit lazy val doubleReads: YamlReads[Double] = ReadsExpectedType[Double]("double")
+  implicit lazy val doubleReads: YamlReads[Double] = TypeCastReads[Double]
 
-  implicit lazy val binaryReads: YamlReads[Array[Byte]] = TypeCastReads("binary")(_.isInstanceOf[Array[Byte]])
+  implicit lazy val binaryReads: YamlReads[Array[Byte]] = TypeCastReads("binary"){
+    //Arrays are not Typeable by design: https://github.com/milessabin/shapeless/issues/465
+
+    //But we can do a pattern match since Arrays don't suffer from type erasure
+    case b:Array[Byte] => b
+  }
 
   // This whole monkey-dance is necessary since not all possible strings are representable as string nodes in yaml,
   // and we allow embedding them as binaries. For this case SnakeYaml returns them as byte arrays.
   //TODO This also still has some encoding issues, but I'm not really certain if those are only coming in from the tests.
-  implicit lazy val stringReads: YamlReads[String] = ReadsExpectedType[String]("string") recoveringWith( binaryReads map { new String(_) } )
+  implicit lazy val stringReads: YamlReads[String] = TypeCastReads[String] recoveringWith( binaryReads map { new String(_) } )
 
   implicit def seqReads[T](implicit elements: YamlReads[T]): YamlReads[Seq[T]] = new YamlReads[Seq[T]] {
     override def reads(any: Any): ErrorOr[Seq[T]] = {
@@ -128,7 +134,7 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
       override def reads(rawValue: Any): ErrorOr[shapeless.::[H, T]] = {
 
         for {
-          map <- implicitly[YamlReads[YamlMap]].reads(rawValue)
+          map <- mapReads.reads(rawValue)
           scalaMap = map.asScala
           headAny <- scalaMap.get(key).toRight(s"Mandatory key $key is missing.")
           headValue <- head.reads(headAny)
