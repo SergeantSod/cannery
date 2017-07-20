@@ -44,8 +44,6 @@ trait Helpers{
     }
   }
 
-  def expectYamlMap(any: Any): ErrorOr[YamlMap] = expectWithCheck[YamlMap]("object", any){ _.asScala.keys.forall(_.isInstanceOf[String]) }
-
   def expect[T:ClassTag](nameInError:String, any: Any): ErrorOr[T] = expectWithCheck[T](nameInError, any)(_ => true)
 
 }
@@ -76,7 +74,21 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
     override def describe: String = "java.util.Map[String,Any]"
   }
 
+  //TODO If we pull the type in here, we might be able to simplify the code for the generic Reads instance
+  implicit lazy val javaListTypeAble : Typeable[JavaList[Any]] = new Typeable[JavaList[Any]] {
+    override def cast(t: Any): Option[JavaList[Any]] = {
+      t match {
+        case v: JavaList[_] => Some(v.asInstanceOf[JavaList[Any]])
+        case _ => None
+      }
+    }
+
+    override def describe: String = "java.util.List[Any]"
+  }
+
   implicit lazy val mapReads:YamlReads[YamlMap] = ReadsExpectedType[YamlMap]("object")
+
+  implicit lazy val javaListReads:YamlReads[JavaList[Any]] = ReadsExpectedType[JavaList[Any]]("list")
 
   implicit lazy val booleanReads: YamlReads[Boolean] = ReadsExpectedType[Boolean]("boolean")
 
@@ -86,22 +98,12 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
 
   implicit lazy val doubleReads: YamlReads[Double] = ReadsExpectedType[Double]("double")
 
+  implicit lazy val binaryReads: YamlReads[Array[Byte]] = ReadsExpectedType[Array[Byte]]("binary")
 
-  implicit val stringReads: YamlReads[String] = new YamlReads[String] with Helpers {
-    override def reads(rawValue: Any): ErrorOr[String] = {
-      // This whole monkey-dance is necessary since not all possible strings are representable as string nodes in yaml,
-      // and we allow embedding them as binaries. For this case SnakeYaml returns them as byte arrays.
-
-      // Note that we flatMap over the left projection, which effectively allows us to provide an alternative Either
-      // that is only evaluated for the failure case. This also explains why we throw way the error message.
-      //TODO This also still has some encoding issues, but I'm not really certain if those are only coming in from the tests.
-      for {
-        _ <- expect[String]("string", rawValue).left
-        binary <- expect[Array[Byte]](s"binary for string", rawValue)
-      } yield new String(binary)
-    }
-
-  }
+  // This whole monkey-dance is necessary since not all possible strings are representable as string nodes in yaml,
+  // and we allow embedding them as binaries. For this case SnakeYaml returns them as byte arrays.
+  //TODO This also still has some encoding issues, but I'm not really certain if those are only coming in from the tests.
+  implicit lazy val stringReads: YamlReads[String] = ReadsExpectedType[String]("string") recoveringWith( binaryReads map { new String(_) } )
 
   implicit def seqReads[T](implicit elements: YamlReads[T]): YamlReads[Seq[T]] = new YamlReads[Seq[T]] with Helpers {
     override def reads(any: Any): ErrorOr[Seq[T]] = {
@@ -141,11 +143,7 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
       }
     }
 
-    override def emptyProduct: YamlReads[HNil] = new YamlReads[HNil] with Helpers {
-      override def reads(any: Any): ErrorOr[HNil] = {
-        expectYamlMap(any).map{ _ => HNil }
-      }
-    }
+    override def emptyProduct: YamlReads[HNil] = mapReads map (_ => HNil)
   }
 
 
