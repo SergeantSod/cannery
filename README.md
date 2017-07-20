@@ -7,6 +7,11 @@ Why:
 * I needed a pet project to play around with [shapeless](https://github.com/milessabin/shapeless)
 * For fun and profit
 
+To run:
+```
+sbt run "example_snippets.yml output.txt"
+```
+
 **Disclaimer:**
 This is mostly for my own amusement at the moment and mostly serves as a testbed for experimentation, so it's not exactly well-tested.
 

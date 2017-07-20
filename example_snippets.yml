@@ -1,0 +1,32 @@
+# Note that these are just humorous examples: In no way do I condone spam
+- keywords:
+    - Salutation
+  snippet: Dear <Adressee>,
+- keywords:
+    - Salutation
+  snippet: Hello <Adressee>,
+- keywords:
+    - Salutation
+  snippet: Dear <Adressee>,
+- keywords:
+    - Money
+    - Charity
+    - Spam
+  snippet: I have <Amount of money> U.S. Dollars and I want you to assist me in distributing the money to charity organizations.
+- keywords:
+    - Money
+    - Spam
+    - Father
+  snippet: Before the death of my father he told me that he has a sum of US$ <Amount of Money> kept in a private security company here in <Country>
+- keywords:
+    - Father
+  snippet: My father sends his regards.
+- keywords:
+    - Closing
+  snippet: Yours sincerely, \n <Sender>
+- keywords:
+    - Closing
+  snippet: Regards, \n <Sender>
+- keywords:
+    - Closing
+  snippet: Thanks in advance, \n <Sender>
