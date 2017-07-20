@@ -7,18 +7,28 @@ import java.util.{List => JavaList, Map => JavaMap}
 
 import scala.collection.JavaConverters._
 
-trait YamlGeneration {
-
-  lazy val snakeYaml = new Yaml()
-
-  //TODO Dry this up with implementation by extracing all of SnakeYamls types into a package/object that can be imported
-  type YamlObjectRepresentation = JavaMap[String, Any]
-
-  //TODO potentially make stuff more type safe by hiding the YAMLObjectRepresentation instead.
-  def yamlInputFor(yamlObject: YamlObjectRepresentation): InputStream = {
-    val stringResult = snakeYaml.dump(yamlObject)
-    new ByteArrayInputStream(stringResult.getBytes)
+/**
+  * A thin wrapper around something that can be represented in snakeYaml with factory methods that make it more typesafe.
+  * The factory methods in the companion object are the main API.
+  * this is just for testing.
+  */
+case class YamlFragment private(snakeYamlRepresentation: Any){
+  def toYaml: String = {
+    YamlFragment.snakeYaml.dump(snakeYamlRepresentation)
   }
-
-  def obj(entries: (String, Any)*): YamlObjectRepresentation = Map(entries:_*).asJava
 }
+
+object YamlFragment{
+  private lazy val snakeYaml = new Yaml()
+
+  //TODO We shouldn't take Any, but a YamlGenerator
+  def obj(entries: (String, Any)*): YamlFragment = this(Map(entries:_*).asJava)
+
+  def seq(first: YamlFragment, other: YamlFragment*): YamlFragment = seq(first +: other)
+  def seq(elements: Seq[YamlFragment]): YamlFragment = this(elements.map(_.snakeYamlRepresentation).asJava)
+
+  implicit def asYaml(fragment: YamlFragment): InputStream = {
+    new ByteArrayInputStream(fragment.toYaml.getBytes)
+  }
+}
+

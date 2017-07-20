@@ -45,7 +45,19 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
   }
 
   implicit val stringReads: YamlReads[String] = new YamlReads[String] with Helpers {
-    override def reads(rawValue: Any): ErrorOr[String] = expect[String]("string", rawValue)
+    override def reads(rawValue: Any): ErrorOr[String] = {
+      // This whole monkey-dance is necessary since not all possible strings are representable as string nodes in yaml,
+      // and we allow embedding them as binaries. For this case SnakeYaml returns them as byte arrays.
+
+      // Note that we flatMap over the left projection, which effectively allows us to provide an alternative Either
+      // that is only evaluated for the failure case. This also explains why we throw way the error message.
+      //TODO This also still has some encoding issues, but I'm not really certain if those are only coming in from the tests.
+      for {
+        _ <- expect[String]("string", rawValue).left
+        binary <- expect[Array[Byte]](s"binary for string", rawValue)
+      } yield new String(binary)
+    }
+
   }
 
   implicit def seqReads[T](implicit elements: YamlReads[T]): YamlReads[Seq[T]] = new YamlReads[Seq[T]] with Helpers {
