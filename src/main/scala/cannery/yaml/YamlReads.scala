@@ -1,11 +1,11 @@
-package yaml_snippets.yaml
+package cannery.yaml
 
 import java.util.{List => JavaList, Map => JavaMap}
 
 import org.yaml.snakeyaml.Yaml
 import shapeless.{HList, HNil, LabelledProductTypeClass, LabelledProductTypeClassCompanion}
-import yaml_snippets.ErrorOr
-import yaml_snippets.yaml.YamlReads.YamlMap
+import cannery.ErrorOr
+import cannery.yaml.YamlReads.YamlMap
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag

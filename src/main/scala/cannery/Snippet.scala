@@ -1,6 +1,6 @@
-package yaml_snippets
+package cannery
 
-import yaml_snippets.string_templates.StringTemplate
+import cannery.string_templates.StringTemplate
 
 case class Snippet(keywords:Seq[String], snippet:String){
   lazy val template = StringTemplate.parse(snippet)

@@ -1,4 +1,4 @@
-package yaml_snippets
+package cannery
 import scala.annotation.tailrec
 import scala.io.StdIn
 import scala.util.Try

@@ -1,4 +1,4 @@
-package yaml_snippets
+package cannery
 
 import java.io._
 import java.util.{List => JavaList, Map => JavaMap}

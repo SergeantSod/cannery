@@ -1,4 +1,4 @@
-name := "yaml_snippets"
+name := "cannery"
 
 version := "1.0"
 
