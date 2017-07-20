@@ -10,6 +10,12 @@ import cannery.yaml.YamlReads.YamlMap
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
+/**
+  * A type class to convert from snakeyamls object-representation into a desired type.
+  * Returns an Either that wraps the result on success or a string describing the nature of the error.
+  *
+  * @tparam T The desired type.
+  */
 trait YamlReads[T] {
   def reads(rawValue: Any): ErrorOr[T]
 }
