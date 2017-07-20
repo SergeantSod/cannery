@@ -35,19 +35,6 @@ trait YamlReads[T] { leftReads =>
   }
 }
 
-trait Helpers{
-
-  def expectWithCheck[T:ClassTag](nameInError:String, any: Any)(deepCheck:T=>Boolean): ErrorOr[T] ={
-    any match {
-      case asT:T if deepCheck(asT) => Right(asT)
-      case _ => Left(s"Expected $nameInError, got ${any.getClass.getName}.")
-    }
-  }
-
-  def expect[T:ClassTag](nameInError:String, any: Any): ErrorOr[T] = expectWithCheck[T](nameInError, any)(_ => true)
-
-}
-
 //TODO Check if we still need deepCheck.
 case class ReadsExpectedType[T:Typeable](nameInError: String, deepCheck:(T=>Boolean) = {_:T => true} ) extends YamlReads[T]{
   override def reads(any: Any): ErrorOr[T] = {
@@ -59,10 +46,20 @@ case class ReadsExpectedType[T:Typeable](nameInError: String, deepCheck:(T=>Bool
   }
 }
 
+//For instances where there is no Typeable
+//TODO Dry it up
+case class TypeCastReads[T](nameInError: String)(typeCheck:(Any=>Boolean)) extends YamlReads[T]{
+  override def reads(any: Any): ErrorOr[T] = {
+    if(typeCheck(any)) { Right(any.asInstanceOf[T]) }
+    else Left(s"Expected $nameInError, got ${any.getClass.getName}.")
+  }
+}
+
 object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
 
   type YamlMap = JavaMap[String, Any]
 
+  //TODO Move typeable instances
   implicit lazy val javaMapTypeAble : Typeable[YamlMap] = new Typeable[YamlMap] {
     override def cast(t: Any): Option[YamlMap] = {
       t match {
@@ -88,7 +85,11 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
 
   implicit lazy val mapReads:YamlReads[YamlMap] = ReadsExpectedType[YamlMap]("object")
 
+  //TODO support targeting a Scala map with String keys.
+
   implicit lazy val javaListReads:YamlReads[JavaList[Any]] = ReadsExpectedType[JavaList[Any]]("list")
+
+  implicit lazy val anySeqReads:YamlReads[Seq[Any]] = javaListReads.map(_.asScala)
 
   implicit lazy val booleanReads: YamlReads[Boolean] = ReadsExpectedType[Boolean]("boolean")
 
@@ -98,25 +99,25 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
 
   implicit lazy val doubleReads: YamlReads[Double] = ReadsExpectedType[Double]("double")
 
-  implicit lazy val binaryReads: YamlReads[Array[Byte]] = ReadsExpectedType[Array[Byte]]("binary")
+  implicit lazy val binaryReads: YamlReads[Array[Byte]] = TypeCastReads("binary")(_.isInstanceOf[Array[Byte]])
 
   // This whole monkey-dance is necessary since not all possible strings are representable as string nodes in yaml,
   // and we allow embedding them as binaries. For this case SnakeYaml returns them as byte arrays.
   //TODO This also still has some encoding issues, but I'm not really certain if those are only coming in from the tests.
   implicit lazy val stringReads: YamlReads[String] = ReadsExpectedType[String]("string") recoveringWith( binaryReads map { new String(_) } )
 
-  implicit def seqReads[T](implicit elements: YamlReads[T]): YamlReads[Seq[T]] = new YamlReads[Seq[T]] with Helpers {
+  implicit def seqReads[T](implicit elements: YamlReads[T]): YamlReads[Seq[T]] = new YamlReads[Seq[T]] {
     override def reads(any: Any): ErrorOr[Seq[T]] = {
-      expect[JavaList[Any]]("list", any).flatMap{ listOfAny =>
+
+      anySeqReads.reads(any).flatMap{ listOfAny:Seq[Any] =>
         val result: ErrorOr[Seq[T]] = Right(Vector.empty[T])
-        listOfAny.iterator.asScala.foldLeft(result){ (current, next) =>
+        listOfAny.foldLeft(result){ (current, next) =>
           for {
             result <- current
             nextElement <- elements.reads(next)
           } yield result :+ nextElement
         }
       }
-
 
     }
   }
