@@ -22,10 +22,21 @@ object YamlFragment{
   private lazy val snakeYaml = new Yaml()
 
   //TODO We shouldn't take Any, but a YamlGenerator
-  def obj(entries: (String, Any)*): YamlFragment = this(Map(entries:_*).asJava)
+  def obj(entries: (String, YamlFragment)*): YamlFragment = {
+    val resolvedValues = entries.map{ case(key, fragment) =>
+        key -> fragment.snakeYamlRepresentation
+    }
+    this( Map(resolvedValues:_*).asJava )
+  }
 
   def seq(first: YamlFragment, other: YamlFragment*): YamlFragment = seq(first +: other)
   def seq(elements: Seq[YamlFragment]): YamlFragment = this(elements.map(_.snakeYamlRepresentation).asJava)
+
+  def str(string: String):YamlFragment = this(string)
+  def bool(boolean: Boolean):YamlFragment = this(boolean)
+  def int(int: Int):YamlFragment = this(int)
+  def float(float: Float):YamlFragment = this(float)
+  def double(double: Double):YamlFragment = this(double)
 
   implicit def asYaml(fragment: YamlFragment): InputStream = {
     new ByteArrayInputStream(fragment.toYaml.getBytes)
