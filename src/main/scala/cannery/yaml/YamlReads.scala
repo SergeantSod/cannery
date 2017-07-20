@@ -44,6 +44,23 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
     override def reads(any: Any): ErrorOr[YamlMap] = expectYamlMap(any)
   }
 
+  implicit val booleanReads: YamlReads[Boolean] = new YamlReads[Boolean] with Helpers {
+    override def reads(rawValue: Any): ErrorOr[Boolean] = expect[Boolean]("boolean", rawValue)
+  }
+
+  implicit val intReads: YamlReads[Int] = new YamlReads[Int] with Helpers {
+    override def reads(rawValue: Any): ErrorOr[Int] = expect[Int]("int", rawValue)
+  }
+
+  implicit val floatReads: YamlReads[Float] = new YamlReads[Float] with Helpers {
+    override def reads(rawValue: Any): ErrorOr[Float] = expect[Float]("float", rawValue)
+  }
+
+  implicit val doubleReads: YamlReads[Double] = new YamlReads[Double] with Helpers {
+    override def reads(rawValue: Any): ErrorOr[Double] = expect[Double]("double", rawValue)
+  }
+
+
   implicit val stringReads: YamlReads[String] = new YamlReads[String] with Helpers {
     override def reads(rawValue: Any): ErrorOr[String] = {
       // This whole monkey-dance is necessary since not all possible strings are representable as string nodes in yaml,
