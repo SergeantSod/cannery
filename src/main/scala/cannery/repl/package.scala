@@ -10,38 +10,38 @@ package object repl {
 
   //TODO This could benefit from Show (probably in cats)
   @tailrec
-  def choose[T](options: Seq[T], header:String)(format: T => String ={ t: T => t.toString})(onChoice: T => Command): Unit ={
+  def choose[T](options: Seq[T], header:String)(onChoice: T => Command): Unit ={
 
     clear()
     printHeader(header)
     printOption("0", "Done.")
 
     options.zipWithIndex.foreach{ case (option, index) =>
-      printOption(index + 1, format(option))
+      printOption(index + 1, option)
     }
 
     readInt() match {
       case Left(error) => {
         println(error)
-        choose(options, header)(format)(onChoice)
+        choose(options, header)(onChoice)
       }
       case Right(0) => {}//0 is the entry for done, so we're done.
       case Right(choice) if (choice >= 1 && choice <= options.size) => {
         val chosen = options(choice - 1 )
         onChoice(chosen) match {
           case Stop => ()
-          case Continue =>  choose(options, header)(format)(onChoice)
+          case Continue =>  choose(options, header)(onChoice)
         }
       }
       case _ => {
         println("Not a valid choice.")
-        choose(options, header)(format)(onChoice)
+        choose(options, header)(onChoice)
       }
     }
 
   }
 
-  def gather(prompt: String, keys: Seq[String]):Map[String, String] = {
+  def gather(prompt: String, keys: Set[String]):Map[String, String] = {
     if(!keys.isEmpty){
       clear()
       printHeader(prompt)

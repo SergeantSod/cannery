@@ -39,6 +39,7 @@ object Runner {
   //TODO Naming
   def generateFromSnippets(snippetsFilePath: String, outputFilePath: String): Unit = {
     readingFrom(snippetsFilePath){ inputStream =>
+      //TODO We should parse the snippets before opening the output file.
       writingTo(outputFilePath){ output =>
         yaml.load[Seq[Snippet]](inputStream) match {
           case Left(error) => println(s"Malformed snippets: $error.")
@@ -61,19 +62,22 @@ object Runner {
 
   //TODO Naming
   private def generateFromTopics(snippets: Seq[Snippet], output: PrintStream) = {
-    //TODO Formatting
 
+    //TODO These should actually be wrapped up in a model class
     val index : Map[String, Seq[StringTemplate]] = buildIndex(snippets)
     val topics = index.keys.toSeq.sorted
-    choose(topics, "Topics")(){ topic =>
-      choose(index(topic), "Snippets")(_.source){ chosenSnippet =>
-        //TODO It would be awesome if there were some way to define global variables, or better yet, re-use earlier bindings where possible and only ask for information on demand.
-        val bindings = gather("Details are needed", chosenSnippet.variableNames)
-        output.println(chosenSnippet.eval(bindings))
+
+    var outputTemplate: StringTemplate = StringTemplate(Seq())
+
+    choose(topics, "Topics"){ topic =>
+      choose(index(topic), "Snippets"){ chosenSnippet =>
+        outputTemplate = outputTemplate concat chosenSnippet
         Stop
       }
       Continue
     }
+    val bindings = gather("Details are needed", outputTemplate.variableNames)
+    output.println(outputTemplate.eval(bindings))
 
   }
 

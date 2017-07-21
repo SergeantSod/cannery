@@ -3,20 +3,23 @@ package cannery.string_templates
 import scala.annotation.tailrec
 
 sealed trait TemplatePart{
-  def eval(bindings: Map[String, Any]): String
+  def evaluate(bindings: Map[String, Any]): String
 }
 
 case class Constant(text: String) extends TemplatePart {
-  override def eval(bindings: Bindings): String = text
+  override def evaluate(bindings: Bindings): String = text
+  override val toString:String = text
 }
 
 case class Variable(name: String) extends TemplatePart {
-  override def eval(bindings: Bindings): String = {
+  override def evaluate(bindings: Bindings): String = {
     bindings get name match {
       case Some(value) => value.toString()
       case None => throw new MissingVariableException(name)
     }
   }
+
+  override lazy val toString:String = s"<$name>"
 }
 
 object TemplatePart {
