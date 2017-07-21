@@ -1,13 +1,13 @@
 # Note that these are just humorous examples: In no way do I condone spam
 - keywords:
     - Salutation
-  snippet: Dear <Adressee>,
+  snippet: "Dear <Adressee>,\n"
+- keywords:
+  - Salutation
+  snippet: "Hello <Adressee>,\n"
 - keywords:
     - Salutation
-  snippet: Hello <Adressee>,
-- keywords:
-    - Salutation
-  snippet: Dear <Adressee>,
+  snippet: "Dear <Adressee>,\n"
 - keywords:
     - Money
     - Charity
@@ -17,16 +17,16 @@
     - Money
     - Spam
     - Father
-  snippet: Before the death of my father he told me that he has a sum of US$ <Amount of Money> kept in a private security company here in <Country>
+  snippet: Before the death of my father he told me that he has a sum of US$ <Amount of money> kept in a private security company here in <Country>.
 - keywords:
     - Father
   snippet: My father sends his regards.
 - keywords:
     - Closing
-  snippet: Yours sincerely, \n <Sender>
+  snippet: "\n\nYours sincerely, \n <Sender>"
 - keywords:
     - Closing
-  snippet: Regards, \n <Sender>
+  snippet: "\n\nRegards, \n <Sender>"
 - keywords:
     - Closing
-  snippet: Thanks in advance, \n <Sender>
+  snippet: "\n\nThanks in advance, \n <Sender>"
