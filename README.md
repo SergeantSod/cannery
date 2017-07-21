@@ -19,7 +19,7 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
 ### TODOs / Plans
 
 #### Cleanup
-- [ ] We can parse StringTemplates directly, since we have `.map` now.
+- [X] We can parse StringTemplates directly, since we have `.map` now.
 - [ ] Rename Yaml-related type classes
 - [ ] Add tests for the interesting bits.
     - [ ] Fix encoding issues for string case
@@ -32,12 +32,13 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
 - [X] Use shapeless for deep type checks and extract a better helper for YamlReads
 
 #### Features
-- [ ] Multiple mentions of the same variable in different snippets should only ask me for the value once.
-- [ ] Allow both arbitrary number of snippets and keywords.
+- [X] Multiple mentions of the same variable in different snippets should only ask me for the value once.
+- [X] Allow both arbitrary number of snippets and keywords.
 - [ ] Add option parser and enable other outputs, such as stdout, clipboard
 - [ ] Support Co-Product in YamlReads type class
     * try implementation for Left, fall back to the Reads for the right side of the co-product maybe use recoverWith
     * for CNil we have failed, since none of the cases matched
+    - [ ] Specifically, this should work nicely with Options
 
 #### Other
 

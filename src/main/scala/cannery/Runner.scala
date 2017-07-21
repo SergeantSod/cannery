@@ -52,22 +52,11 @@ object Runner {
     }
   }
 
-  def buildIndex(snippets: Seq[Snippet]): Map[String, Seq[StringTemplate]] = {
-    //TODO Apparently, Cats has a Semigroup for Maps that does this more elegantly.
-    snippets.foldLeft(Map.empty[String, Seq[StringTemplate]]){ (index, topic) =>
-      topic.keywords.foldLeft(index){ (index, keyword) =>
-        val current = index getOrElse(keyword, List.empty[StringTemplate])
-        index + (keyword -> (topic.snippet+:current))
-      }
-    }
-
-  }
-
   //TODO Naming
   private def generateFromTopics(snippets: Seq[Snippet], output: PrintStream) = {
 
     //TODO These should actually be wrapped up in a model class
-    val index : Map[String, Seq[StringTemplate]] = buildIndex(snippets)
+    val index : Map[String, Seq[StringTemplate]] = Snippet.buildIndex(snippets)
     val topics = index.keys.toSeq.sorted
 
     var outputTemplate: StringTemplate = StringTemplate(Seq())

@@ -21,18 +21,16 @@ case class Variable(name: String) extends TemplatePart {
 
 object TemplatePart {
 
-  def parse(template: String): Seq[TemplatePart] = parseInto(template: String, Vector.empty[TemplatePart])
-
   val variablePattern = "<([^<>]+)>".r
 
   @tailrec
-  private def parseInto(template: CharSequence, result: Seq[TemplatePart]): Seq[TemplatePart] = variablePattern findFirstMatchIn template match {
-    case None => result :+ Constant(template.toString)
+  def parse(template: CharSequence, into: Seq[TemplatePart] = Vector.empty[TemplatePart]): Seq[TemplatePart] = variablePattern findFirstMatchIn template match {
+    case None => into :+ Constant(template.toString)
     case Some(matchData) => {
       val prefix = matchData.before
       val variableName = matchData.group(1)
 
-      parseInto(matchData.after, result :+ Constant(prefix.toString) :+ Variable(variableName) )
+      parse(matchData.after, into :+ Constant(prefix.toString) :+ Variable(variableName) )
     }
   }
 
