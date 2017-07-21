@@ -137,7 +137,7 @@ object YamlReads extends LabelledTypeClassCompanion[YamlReads] {
           map <- mapReads.reads(rawValue)
           scalaMap = map.asScala
           //TODO If we want to support Option, failing here in the case of a missing key is a little bit too eager.
-          //The reads should have to say a word about this and receive the optional value. This means that we'd have to change the interface of Reads, though.
+          //The head-reads should have to say a word about this and receive the optional value. This means that we'd have to change the interface of Reads, though.
           headAny <- scalaMap.get(key).toRight(s"Mandatory key $key is missing.")
           headValue <- head.reads(headAny)
           tailValue <- tail.reads(map)
