@@ -2,6 +2,4 @@ package cannery.models
 
 import cannery.string_templates.StringTemplate
 
-case class Snippet(keywords:Seq[String], snippet:String){
-  lazy val template = StringTemplate.parse(snippet)
-}
+case class Snippet(keywords:Seq[String], snippet:StringTemplate)

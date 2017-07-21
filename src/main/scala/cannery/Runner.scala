@@ -4,6 +4,7 @@ import java.io._
 import java.util.{List => JavaList, Map => JavaMap}
 
 import cannery.models.Snippet
+import cannery.yaml.YamlReads
 import org.yaml.snakeyaml.Yaml
 
 import scala.collection.JavaConverters._
@@ -41,6 +42,8 @@ object Runner {
     readingFrom(snippetsFilePath){ inputStream =>
       //TODO We should parse the snippets before opening the output file.
       writingTo(outputFilePath){ output =>
+
+        implicit val templateReads: YamlReads[StringTemplate] = implicitly[YamlReads[String]] map StringTemplate.parse
         yaml.load[Seq[Snippet]](inputStream) match {
           case Left(error) => println(s"Malformed snippets: $error.")
           case Right(topics) => generateFromTopics(topics, output)
@@ -54,7 +57,7 @@ object Runner {
     snippets.foldLeft(Map.empty[String, Seq[StringTemplate]]){ (index, topic) =>
       topic.keywords.foldLeft(index){ (index, keyword) =>
         val current = index getOrElse(keyword, List.empty[StringTemplate])
-        index + (keyword -> (topic.template+:current))
+        index + (keyword -> (topic.snippet+:current))
       }
     }
 
