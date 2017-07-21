@@ -10,8 +10,8 @@ object SnippetGroup{
 
   def growIndex(index: Index, group: SnippetGroup): Index={
     group.keywords.foldLeft(index){ (index, keyword) =>
-      val current = index getOrElse(keyword, List.empty[StringTemplate])
-      index + (keyword -> (group.snippets++:current))
+      val current = index getOrElse(keyword, Vector.empty[StringTemplate])
+      index + (keyword -> (current ++ group.snippets))
     }
   }
 
