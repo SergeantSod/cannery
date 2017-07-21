@@ -26,6 +26,7 @@ This is mostly for my own amusement at the moment and mostly serves as a testbed
     - [X] YAML-related type class derivation
 - [ ] Consider extracting YAML-related stuff into separate project
 - [ ] See how useful cats could be
+    - [ ] Show typeclass
     - [ ] Some of the folds during parsing
     - [ ] ValidatedNel would capture all the errors instead of failing at the first
 - [X] Use shapeless for deep type checks and extract a better helper for YamlReads
