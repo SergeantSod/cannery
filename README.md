@@ -32,13 +32,12 @@ This is mostly for my own amusement at the moment and mostly serves as a playgro
 - [X] We can parse StringTemplates directly, since we have `.map` now.
 
 #### Features
-- [ ] Support Co-Product in YamlReads type class
-    - [X] This should work for simple sealed traits
-    - [ ] This should also work nicely with Options (might need some special love)
+- [ ] Support `Option[T]` fields in YamlReads
 - [ ] Add option parser and enable other outputs, such as:
     - [ ] stdout
     - [ ] clipboard
     - [ ] file (implemented, but need abstracting from)
+- [X] Support simple Co-Product in YamlReads type class
 - [X] Multiple mentions of the same variable in different snippets should only ask me for the value once.
 - [X] Allow both arbitrary number of snippets and keywords.
 
