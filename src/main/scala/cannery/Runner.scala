@@ -3,7 +3,7 @@ package cannery
 import java.io._
 import java.util.{List => JavaList, Map => JavaMap}
 
-import cannery.models.Snippet
+import cannery.models.SnippetGroup
 import cannery.yaml.YamlReads
 import org.yaml.snakeyaml.Yaml
 
@@ -44,25 +44,25 @@ object Runner {
       writingTo(outputFilePath){ output =>
 
         implicit val templateReads: YamlReads[StringTemplate] = implicitly[YamlReads[String]] map StringTemplate.parse
-        yaml.load[Seq[Snippet]](inputStream) match {
+        yaml.load[Seq[SnippetGroup]](inputStream) match {
           case Left(error) => println(s"Malformed snippets: $error.")
-          case Right(topics) => generateFromTopics(topics, output)
+          case Right(groups) => generateFromTopics(groups, output)
         }
       }
     }
   }
 
   //TODO Naming
-  private def generateFromTopics(snippets: Seq[Snippet], output: PrintStream) = {
+  private def generateFromTopics(groups: Seq[SnippetGroup], output: PrintStream) = {
 
-    //TODO These should actually be wrapped up in a model class
-    val index : Map[String, Seq[StringTemplate]] = Snippet.buildIndex(snippets)
-    val topics = index.keys.toSeq.sorted
+    //TODO These could actually be wrapped up in a proper index model class
+    val index : Map[String, Seq[StringTemplate]] = SnippetGroup.buildIndex(groups)
+    val keywords = index.keys.toSeq.sorted
 
-    var outputTemplate: StringTemplate = StringTemplate(Seq())
+    var outputTemplate: StringTemplate = StringTemplate.empty
 
-    choose(topics, "Topics"){ topic =>
-      choose(index(topic), "Snippets"){ chosenSnippet =>
+    choose(keywords, "Topics"){ keyword =>
+      choose(index(keyword), "Snippets"){ chosenSnippet =>
         outputTemplate = outputTemplate concat chosenSnippet
         Stop
       }
