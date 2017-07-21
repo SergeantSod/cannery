@@ -1,4 +1,4 @@
-package cannery
+package cannery.models
 
 import cannery.string_templates.StringTemplate
 

@@ -3,11 +3,11 @@ package cannery
 import java.io._
 import java.util.{List => JavaList, Map => JavaMap}
 
+import cannery.models.Snippet
 import org.yaml.snakeyaml.Yaml
 
 import scala.collection.JavaConverters._
 import scala.util.control.Exception.allCatch
-
 import string_templates._
 import repl._
 
