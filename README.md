@@ -36,7 +36,10 @@ This is mostly for my own amusement at the moment and mostly serves as a playgro
     * try implementation for Left, fall back to the Reads for the right side of the co-product maybe use recoverWith
     * for CNil we have failed, since none of the cases matched
     - [ ] Specifically, this should work nicely with Options
-- [ ] Add option parser and enable other outputs, such as stdout, clipboard
+- [ ] Add option parser and enable other outputs, such as:
+    - [ ] stdout
+    - [ ] clipboard
+    - [ ] file (implemented, but need abstracting from)
 - [X] Multiple mentions of the same variable in different snippets should only ask me for the value once.
 - [X] Allow both arbitrary number of snippets and keywords.
 
