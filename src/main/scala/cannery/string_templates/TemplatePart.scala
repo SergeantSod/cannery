@@ -3,7 +3,7 @@ package cannery.string_templates
 import scala.annotation.tailrec
 
 sealed trait TemplatePart{
-  def evaluate(bindings: Map[String, Any]): String
+  def evaluate(bindings: Bindings): String
 }
 
 case class Constant(text: String) extends TemplatePart {
@@ -13,10 +13,7 @@ case class Constant(text: String) extends TemplatePart {
 
 case class Variable(name: String) extends TemplatePart {
   override def evaluate(bindings: Bindings): String = {
-    bindings get name match {
-      case Some(value) => value.toString()
-      case None => throw new MissingVariableException(name)
-    }
+    bindings(name).toString
   }
 
   override lazy val toString:String = s"<$name>"

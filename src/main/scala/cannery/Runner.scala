@@ -77,7 +77,7 @@ object Runner {
       Continue
     }
     val bindings = gather("Details are needed", outputTemplate.variableNames)
-    output.println(outputTemplate.eval(bindings))
+    output.println(outputTemplate.evaluate(bindings))
 
   }
 

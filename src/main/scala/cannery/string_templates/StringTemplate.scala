@@ -2,7 +2,8 @@ package cannery.string_templates
 
 case class StringTemplate(parts: Seq[TemplatePart]){
 
-  def eval(bindings: Bindings): String = {
+  //TODO There are overlaps in the interface of this and TemplatePart
+  def evaluate(bindings: Bindings): String = {
     parts.map(_.evaluate(bindings)).mkString
   }
 
