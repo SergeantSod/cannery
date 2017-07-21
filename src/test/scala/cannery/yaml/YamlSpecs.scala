@@ -149,5 +149,34 @@ class YamlSpec extends UnitSpec {
       }
 
     }
+
+    "when parsing a co-product type" - {
+
+      "when the fields are unambiguous" - {
+
+        sealed trait SomeCoProduct
+        case class EitherThis(some:String) extends SomeCoProduct
+        case class OrThis(other:String) extends SomeCoProduct
+
+        "should successfully parse to the matching case" in {
+          forAll{ (someString: String) =>
+            load[SomeCoProduct]( obj("some" -> str(someString)) ) should===(Right(EitherThis(someString)))
+          }
+        }
+
+        "should successfully parse to the other matching case" in {
+          forAll{ (someString: String) =>
+            load[SomeCoProduct]( obj("other" -> str(someString)) ) should===(Right(OrThis(someString)))
+          }
+        }
+
+        "should fail if no case matches" in {
+          forAll{ (someString: String) =>
+            load[SomeCoProduct]( obj("nomatching" -> str(someString)) ) shouldBe a[Left[_, _]]
+          }
+        }
+      }
+
+    }
   }
 }

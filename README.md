@@ -33,9 +33,8 @@ This is mostly for my own amusement at the moment and mostly serves as a playgro
 
 #### Features
 - [ ] Support Co-Product in YamlReads type class
-    * try implementation for Left, fall back to the Reads for the right side of the co-product maybe use recoverWith
-    * for CNil we have failed, since none of the cases matched
-    - [ ] Specifically, this should work nicely with Options
+    - [X] This should work for simple sealed traits
+    - [ ] This should also work nicely with Options (might need some special love)
 - [ ] Add option parser and enable other outputs, such as:
     - [ ] stdout
     - [ ] clipboard

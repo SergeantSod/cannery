@@ -3,7 +3,7 @@ package cannery.yaml
 import java.util.{List => JavaList, Map => JavaMap}
 
 import org.yaml.snakeyaml.Yaml
-import shapeless.{HList, HNil, LabelledProductTypeClass, LabelledProductTypeClassCompanion, TypeCase, Typeable}
+import shapeless.{:+:, CNil, Coproduct, HList, HNil, Inr, LabelledProductTypeClass, LabelledProductTypeClassCompanion, LabelledTypeClass, LabelledTypeClassCompanion, TypeCase, Typeable}
 import cannery.ErrorOr
 import cannery.yaml.YamlReads.YamlMap
 
@@ -56,7 +56,7 @@ object TypeCastReads{
   }
 }
 
-object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
+object YamlReads extends LabelledTypeClassCompanion[YamlReads] {
 
   type YamlMap = JavaMap[String, Any]
 
@@ -128,7 +128,7 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
     }
   }
 
-  val typeClass: LabelledProductTypeClass[YamlReads] = new LabelledProductTypeClass[YamlReads] {
+  val typeClass: LabelledTypeClass[YamlReads] = new LabelledTypeClass[YamlReads] {
 
     override def product[H, T <: HList](key: String, head: YamlReads[H], tail: YamlReads[T]): YamlReads[shapeless.::[H, T]] = new YamlReads[shapeless.::[H, T]] {
       override def reads(rawValue: Any): ErrorOr[shapeless.::[H, T]] = {
@@ -151,6 +151,23 @@ object YamlReads extends LabelledProductTypeClassCompanion[YamlReads] {
     }
 
     override def emptyProduct: YamlReads[HNil] = mapReads map (_ => HNil)
+
+    override def coproduct[L, R <: Coproduct](name: String, firstReads: => YamlReads[L], otherReads: => YamlReads[R]): YamlReads[:+:[L, R]] = new YamlReads[:+:[L, R]]{
+
+      override def reads(rawValue: Any): ErrorOr[L:+:R] = {
+
+
+        val firstResult: ErrorOr[L:+:R] = firstReads.reads(rawValue).map{Coproduct[L:+:R](_)}
+        for {
+          _ <- firstResult.left
+          otherResult <- otherReads.reads(rawValue)
+        } yield Inr(otherResult)
+      }
+    }
+
+    override def emptyCoproduct: YamlReads[CNil] = new YamlReads[CNil] {
+      override def reads(rawValue: Any): ErrorOr[CNil] = Left("No matching case.")
+    }
   }
 
 
